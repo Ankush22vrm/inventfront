@@ -87,7 +87,7 @@ const Dashboard = ({ showToast }) => {
   const handleAddProduct = async (data) => {
     try {
       if (editingProduct) {
-        await dispatch(updateProduct({ id: editingProduct._id, data })).unwrap();
+        await dispatch(updateProduct({ id: editingProduct._id, productData: data })).unwrap();
         showToast('Product updated successfully!');
       } else {
         await dispatch(createProduct(data)).unwrap();
@@ -99,7 +99,7 @@ const Dashboard = ({ showToast }) => {
       showToast(error.message || 'Failed to save product', 'error');
     }
   };
-
+  
   const handleDeleteProduct = async () => {
     try {
       await dispatch(deleteProduct(deleteDialog.id)).unwrap();
