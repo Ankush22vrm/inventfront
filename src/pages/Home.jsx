@@ -1,11 +1,11 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import { Warehouse, Package, TrendingUp, Shield } from 'lucide-react';
-import Button from '../components/shared/Button';
+
 import Card from '../components/shared/Card';
 
 const Home = () => {
-  const navigate = useNavigate();
+ // const navigate = useNavigate();
 
   const features = [
     {
@@ -39,9 +39,6 @@ const Home = () => {
         <p className="text-xl text-gray-600 mb-8">
           Your Complete Warehouse Management Solution
         </p>
-        <Button onClick={() => navigate('/login')} className="text-lg px-8 py-3">
-          Get Started
-        </Button>
       </div>
 
       <div className="grid md:grid-cols-2 gap-8 mt-16">
