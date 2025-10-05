@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Plus, Warehouse as WarehouseIcon } from 'lucide-react';
 import Sidebar from '../components/layout/Sidebar';
 import Button from '../components/shared/Button';
@@ -7,17 +8,30 @@ import ProductList from '../components/product/ProductList';
 import WarehouseForm from '../components/warehouse/WarehouseForm';
 import ProductForm from '../components/product/ProductForm';
 import DeleteDialog from '../components/shared/DeleteDialog';
-import api from '../utils/api';
 import { ITEMS_PER_PAGE } from '../utils/constants';
+import {
+  fetchWarehouses,
+  createWarehouse,
+  deleteWarehouse,
+  setSelectedWarehouse,
+} from '../redux/slices/warehouseSlice';
+import {
+  fetchProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from '../redux/slices/productSlice';
 
-const Dashboard = ({
-  warehouses,
-  products,
-  selectedWarehouse,
-  onSelectWarehouse,
-  onRefresh,
-  showToast,
-}) => {
+const Dashboard = ({ showToast }) => {
+  const dispatch = useDispatch();
+  
+ const { warehouses, selectedWarehouse, loading: warehouseLoading } = useSelector(
+  (state) => state.warehouse
+);
+
+  const { products, loading: productLoading } = useSelector((state) => state.product);
+
+
   const [showWarehouseForm, setShowWarehouseForm] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -34,53 +48,65 @@ const Dashboard = ({
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Load warehouses on mount
+  useEffect(() => {
+    dispatch(fetchWarehouses());
+  }, [dispatch]);
+
+  // Load products when warehouse is selected
+  useEffect(() => {
+    if (selectedWarehouse) {
+      dispatch(fetchProducts(selectedWarehouse._id));
+    }
+  }, [dispatch, selectedWarehouse]);
+
   const handleAddWarehouse = async (data) => {
     try {
-      await api.post('/warehouses', data);
+      await dispatch(createWarehouse(data)).unwrap();
       showToast('Warehouse added successfully!');
       setShowWarehouseForm(false);
-      onRefresh();
     } catch (error) {
-      showToast(error.message, 'error');
+      showToast(error.message || 'Failed to add warehouse', 'error');
     }
   };
 
   const handleDeleteWarehouse = async () => {
     try {
-      await api.delete(`/warehouses/${deleteDialog.id}`);
+      await dispatch(deleteWarehouse(deleteDialog.id)).unwrap();
       showToast('Warehouse deleted successfully!');
       setDeleteDialog({ isOpen: false, type: null, id: null });
-      onRefresh();
     } catch (error) {
-      showToast(error.message, 'error');
+      showToast(error.message || 'Failed to delete warehouse', 'error');
     }
+  };
+
+  const handleSelectWarehouse = (warehouse) => {
+    dispatch(setSelectedWarehouse(warehouse));
   };
 
   const handleAddProduct = async (data) => {
     try {
       if (editingProduct) {
-        await api.put(`/products/${editingProduct._id}`, data);
+        await dispatch(updateProduct({ id: editingProduct._id, data })).unwrap();
         showToast('Product updated successfully!');
       } else {
-        await api.post('/products', data);
+        await dispatch(createProduct(data)).unwrap();
         showToast('Product added successfully!');
       }
       setShowProductForm(false);
       setEditingProduct(null);
-      onRefresh();
     } catch (error) {
-      showToast(error.message, 'error');
+      showToast(error.message || 'Failed to save product', 'error');
     }
   };
 
   const handleDeleteProduct = async () => {
     try {
-      await api.delete(`/products/${deleteDialog.id}`);
+      await dispatch(deleteProduct(deleteDialog.id)).unwrap();
       showToast('Product deleted successfully!');
       setDeleteDialog({ isOpen: false, type: null, id: null });
-      onRefresh();
     } catch (error) {
-      showToast(error.message, 'error');
+      showToast(error.message || 'Failed to delete product', 'error');
     }
   };
 
@@ -144,7 +170,7 @@ const Dashboard = ({
       <Sidebar
         warehouses={warehouses}
         selectedWarehouse={selectedWarehouse}
-        onSelectWarehouse={onSelectWarehouse}
+        onSelectWarehouse={handleSelectWarehouse}
         onAddWarehouse={() => setShowWarehouseForm(true)}
         onDeleteWarehouse={(id) =>
           setDeleteDialog({ isOpen: true, type: 'warehouse', id })
@@ -179,7 +205,11 @@ const Dashboard = ({
               />
 
               {/* Products List */}
-              {paginatedProducts.length > 0 ? (
+              {productLoading ? (
+                <div className="bg-white rounded-lg shadow-md p-16 text-center">
+                  <p className="text-gray-500">Loading products...</p>
+                </div>
+              ) : paginatedProducts.length > 0 ? (
                 <ProductList
                   products={paginatedProducts}
                   currentPage={currentPage}

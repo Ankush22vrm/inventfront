@@ -1,34 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import Modal from '../shared/Modal';
 import Input from '../shared/Input';
 import Button from '../shared/Button';
 import Loader from '../shared/Loader';
-import api from '../../utils/api';
+import { updateProfile } from '../../redux/slices/authSlice';
 
-const UpdateProfileForm = ({ isOpen, onClose, user, showToast }) => {
+const UpdateProfileForm = ({ isOpen, onClose, showToast }) => {
+  const dispatch = useDispatch();
+  const { user, loading } = useSelector((state) => state.auth);
+  
   const [formData, setFormData] = useState({
-    username: user?.username || '',
+    username: '',
     profileImage: null,
   });
-  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        username: user.username || '',
+        profileImage: null,
+      });
+    }
+  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    
     try {
       const data = new FormData();
       data.append('username', formData.username);
-      if (formData.profileImage)
+      if (formData.profileImage) {
         data.append('profileImage', formData.profileImage);
+      }
 
-      await api.put('/users/profile', data);
+      await dispatch(updateProfile(data)).unwrap();
       showToast('Profile updated successfully!');
       onClose();
-      window.location.reload();
     } catch (error) {
-      showToast(error.message, 'error');
-    } finally {
-      setLoading(false);
+      showToast(error.message || 'Failed to update profile', 'error');
     }
   };
 

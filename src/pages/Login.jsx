@@ -1,17 +1,25 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import LoginForm from '../components/auth/LoginForm';
+import { login } from '../redux/slices/authSlice'; // ✅ import the thunk, not the API
 
-const Login = ({ onLogin, onNavigateSignup }) => {
-  const [isLoading, setIsLoading] = useState(false);
+const Login = ({ showToast }) => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.auth);
 
   const handleLogin = async (credentials) => {
-    setIsLoading(true);
     try {
-      await onLogin(credentials);
+      // ✅ Dispatch Redux thunk (handles token, user, etc.)
+      await dispatch(login(credentials)).unwrap();
+
+      showToast('Login successful!');
+      navigate('/dashboard');
     } catch (error) {
-      // Error handled in parent
-    } finally {
-      setIsLoading(false);
+      // ✅ Ensure only string/error.message is passed
+      const message = error?.message || String(error);
+      showToast(message, 'error');
     }
   };
 
@@ -21,15 +29,12 @@ const Login = ({ onLogin, onNavigateSignup }) => {
         <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
           Login to WareFlow
         </h2>
-        <LoginForm onLogin={handleLogin} isLoading={isLoading} />
+        <LoginForm onLogin={handleLogin} isLoading={loading} />
         <p className="text-center mt-4 text-gray-600">
           Don't have an account?{' '}
-          <button
-            onClick={onNavigateSignup}
-            className="text-purple-600 hover:underline font-medium"
-          >
+          <Link to="/signup" className="text-purple-600 hover:underline font-medium">
             Sign up
-          </button>
+          </Link>
         </p>
       </div>
     </div>

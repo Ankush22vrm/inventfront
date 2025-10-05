@@ -1,17 +1,64 @@
-import React, { useState } from 'react';
-import SignupForm from '../components/auth/SignupForm';
+// import React from 'react';
+// import { useNavigate, Link } from 'react-router-dom';
+// import { useDispatch, useSelector } from 'react-redux';
+// import SignupForm from '../components/auth/SignupForm';
+// import { signup } from '../redux/slices/authSlice'; // ✅ use the thunk
 
-const Signup = ({ onSignup, onNavigateLogin }) => {
-  const [isLoading, setIsLoading] = useState(false);
+// const Signup = ({ showToast }) => {
+//   const navigate = useNavigate();
+//   const dispatch = useDispatch();
+//   const { loading } = useSelector((state) => state.auth);
+
+//   const handleSignup = async (formData) => {
+//     try {
+//       await dispatch(signup(formData)).unwrap();
+//       showToast('Signup successful!');
+//       navigate('/login');
+//     } catch (error) {
+//       // ✅ Always pass string only
+//       const message = error?.message || String(error);
+//       showToast(message, 'error');
+//     }
+//   };
+
+//   return (
+//     <div className="max-w-md mx-auto px-4 py-16">
+//       <div className="bg-white p-8 rounded-lg shadow-md">
+//         <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+//           Create your WareFlow account
+//         </h2>
+//         <SignupForm onSignup={handleSignup} isLoading={loading} />
+//         <p className="text-center mt-4 text-gray-600">
+//           Already have an account?{' '}
+//           <Link to="/login" className="text-purple-600 hover:underline font-medium">
+//             Log in
+//           </Link>
+//         </p>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default Signup;
+import React from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import SignupForm from '../components/auth/SignupForm';
+import { signup } from '../redux/slices/authSlice';
+
+const Signup = ({ showToast }) => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.auth);
 
   const handleSignup = async (formData) => {
-    setIsLoading(true);
     try {
-      await onSignup(formData);
+      await dispatch(signup(formData)).unwrap();
+      showToast('Signup successful! Please log in.');
+      navigate('/login'); // ✅ Redirect to login after successful signup
     } catch (error) {
-      // Error handled in parent
-    } finally {
-      setIsLoading(false);
+      const message = error?.message || String(error);
+      showToast(message, 'error');
     }
   };
 
@@ -19,17 +66,15 @@ const Signup = ({ onSignup, onNavigateLogin }) => {
     <div className="max-w-md mx-auto px-4 py-16">
       <div className="bg-white p-8 rounded-lg shadow-md">
         <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-          Sign Up for WareFlow
+          Create Your WareFlow Account
         </h2>
-        <SignupForm onSignup={handleSignup} isLoading={isLoading} />
+        <SignupForm onSignup={handleSignup} isLoading={loading} />
+
         <p className="text-center mt-4 text-gray-600">
           Already have an account?{' '}
-          <button
-            onClick={onNavigateLogin}
-            className="text-purple-600 hover:underline font-medium"
-          >
-            Login
-          </button>
+          <Link to="/login" className="text-purple-600 hover:underline font-medium">
+            Log in
+          </Link>
         </p>
       </div>
     </div>
